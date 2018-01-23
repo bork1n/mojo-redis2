@@ -265,13 +265,18 @@ sub _read {
   do { local $_ = $buf; s!\r\n!\\r\\n!g; warn "[$c->{name}] >>> ($_)\n" } if DEBUG;
   $protocol->parse($buf);
 
+  my $get_cb = sub {
+     my $op = shift @{$c->{waiting} || []};
+     my $cb = $op->[0];
+     return $cb;
+  };
+
 MESSAGE:
   while (my $message = $protocol->get_message) {
     my $data = $self->_reencode_message($message);
-    my $op   = shift @{$c->{waiting} || []};
-    my $cb   = $op->[0];
 
     if (ref $data eq 'SCALAR') {
+      my $cb = $get_cb->();
       $self->$cb($$data, []) if $cb;
     }
     elsif (ref $data eq 'ARRAY' and $data->[0] and $data->[0] =~ /^(p?message)$/i) {
@@ -279,6 +284,7 @@ MESSAGE:
       $self->emit($event => reverse @$data);
     }
     else {
+      my $cb = $get_cb->();
       $self->$cb('', $data) if $cb;
     }
 

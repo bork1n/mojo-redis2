@@ -270,7 +270,7 @@ MESSAGE:
     my $data = $self->_reencode_message($message);
 
     if (ref $data eq 'SCALAR') {
-      my $cb = (shift @{$c->{waiting} || []})->[0];
+      my $cb = (shift @{$c->{waiting}} || [])->[0];
       $self->$cb($$data, []) if $cb;
     }
     elsif (ref $data eq 'ARRAY' and $data->[0] and $data->[0] =~ /^(p?message)$/i) {
@@ -278,7 +278,7 @@ MESSAGE:
       $self->emit($event => reverse @$data);
     }
     else {
-      my $cb = (shift @{$c->{waiting} || []})->[0];
+      my $cb = (shift @{$c->{waiting}} || [])->[0];
       $self->$cb('', $data) if $cb;
     }
 
